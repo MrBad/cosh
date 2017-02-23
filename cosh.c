@@ -8,8 +8,9 @@
 //
 //  Simple shell intended for my hobby osdev - cOSiris
 //      supports multiple commands, pipes and redirections
+//		TODO:	some builtins: cd is a must
+//				some history, env and maybe variables
 //
-
 #define MAX_ARGV 16
 #define MAX_TOKEN_SZ 512
 
@@ -219,6 +220,18 @@ void print_commands(cmd_t *head)
 	}
 }
 
+int cd(char *dir) {
+	int ret;
+	if(dir)
+		ret = chdir(dir);
+	else 
+		ret = chdir("/");
+	if(ret < 0) {
+		printf("cd: cannot change to %s\n", dir);
+	}
+	return ret;
+}
+
 int exec_commands(cmd_t *head) 
 {
 	cmd_t *cmd;
@@ -227,6 +240,10 @@ int exec_commands(cmd_t *head)
 	int status;
 
 	for (cmd = head; cmd; cmd = cmd->next) {
+		if(strcmp(cmd->argv[0], "cd") == 0) {
+			cd(cmd->argv[1]);
+			continue;
+		}
 		if (cmd->do_pipe) {
 			pipe(fd);
 			cmd->next->fdin = fd[0];
