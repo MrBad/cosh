@@ -14,13 +14,13 @@
 #define MAX_TOKEN_SZ 512
 
 typedef struct cmd {
-	int argc;                    // number of arguments
-	char *argv[MAX_ARGV];        // arguments
-	char *outfile, *infile;        // file names used in redirects
-	int fdin, fdout;            // file descriptors
-	int append;                 // if fdout should be opened in append mode
-	int do_pipe;                // if we have a pipe after command
-	struct cmd *next;            // link to next struct
+	int argc;					// number of arguments
+	char *argv[MAX_ARGV];		// arguments
+	char *outfile, *infile;		// file names used in redirects
+	int fdin, fdout;			// file descriptors
+	int append;					// if fdout should be opened in append mode
+	int do_pipe;				// if we have a pipe after command
+	struct cmd *next;			// link to next struct
 } cmd_t;
 
 void print_prompt();
@@ -30,7 +30,8 @@ void print_commands(cmd_t *head);
 int exec_commands(cmd_t *head);
 
 
-void clean_cmd(cmd_t *cmd) {
+void clean_cmd(cmd_t *cmd) 
+{
 	cmd_t *c;
 	int i;
 	while (cmd) {
@@ -49,7 +50,8 @@ void clean_cmd(cmd_t *cmd) {
 // from where we read -> stdin for now //
 int fd;
 
-int main() {
+int main() 
+{
 	char line[512];
 	fd = 0;
 	cmd_t *head;
@@ -61,17 +63,18 @@ int main() {
 			clean_cmd(head);
 			continue;
 		}
-//		print_commands(head);
 		exec_commands(head);
 		clean_cmd(head);
 	}
 }
 
-void print_prompt() {
+void print_prompt() 
+{
 	write(1, "# ", 2);
 }
 
-int read_line(char *buf, size_t size) {
+int read_line(char *buf, size_t size) 
+{
 	ssize_t n = 0;
 	n = read(fd, buf, size);
 	buf[n] = 0;
@@ -81,7 +84,8 @@ int read_line(char *buf, size_t size) {
 #define is_space(p) (p==' '||p=='\t'||p=='\r'||p=='\n')
 #define is_symbol(p) (p=='<'||p=='>'||p=='|'||p==';'||p=='"')
 
-int get_token(char **buf, char *tok, char *end) {
+int get_token(char **buf, char *tok, char *end) 
+{
 	char *p;
 	p = *buf;
 
@@ -120,19 +124,22 @@ int get_token(char **buf, char *tok, char *end) {
 	return *p ? 0 : -1;
 }
 
-cmd_t *cmd_new() {
+cmd_t *cmd_new() 
+{
 	cmd_t *cmd;
 	cmd = calloc(1, sizeof(cmd_t));
 	cmd->fdin = cmd->fdout = -1;
 	return cmd;
 }
 
-int parse(char *buf, cmd_t **h) {
+int parse(char *buf, cmd_t **h) 
+{
 	char token[MAX_TOKEN_SZ];
 	char *end = token + MAX_TOKEN_SZ;
 	char *ptr = buf;
 	cmd_t *cmd, *head;
 	head = cmd = *h;
+
 	while (get_token(&ptr, token, token + MAX_TOKEN_SZ) == 0) {
 		if (is_symbol(token[0])) {
 			if (!cmd) {
@@ -187,9 +194,10 @@ int parse(char *buf, cmd_t **h) {
 	return 0;
 }
 
-void print_commands(cmd_t *head) {
+void print_commands(cmd_t *head) 
+{
 	cmd_t *cmd;
-	printf("print\n");
+	
 	for (cmd = head; cmd; cmd = cmd->next) {
 		printf("cmd: %s, argc: %d\n", cmd->argv[0], cmd->argc);
 		if (cmd->do_pipe) {
@@ -211,12 +219,12 @@ void print_commands(cmd_t *head) {
 	}
 }
 
-int exec_commands(cmd_t *head) {
+int exec_commands(cmd_t *head) 
+{
 	cmd_t *cmd;
 	int fd[2];
 	pid_t pid;
 	int status;
-//	int stdout_copy = dup(1);
 
 	for (cmd = head; cmd; cmd = cmd->next) {
 		if (cmd->do_pipe) {
@@ -236,17 +244,12 @@ int exec_commands(cmd_t *head) {
 
 		pid = fork();
 		if (pid == 0) {
-//			pid_t p = getpid();
 			if (cmd->fdout > 0) {
 				close(1);
 				if (dup(cmd->fdout) != 1) {
 					fprintf(stderr, "error in dup() stdout\n");
 				}
-			} else {
-				//	close(1);
-				//	dup2(stdout_copy, 1);
-			}
-
+			} 
 			if (cmd->fdin > 0) {
 				close(0);
 				if (dup(cmd->fdin) != 0)
