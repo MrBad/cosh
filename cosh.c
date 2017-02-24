@@ -21,6 +21,7 @@ typedef struct cmd {
 	int fdin, fdout;			// file descriptors
 	int append;					// if fdout should be opened in append mode
 	int do_pipe;				// if we have a pipe after command
+	pid_t pid;					// pid of this cmd
 	struct cmd *next;			// link to next struct
 } cmd_t;
 
@@ -246,7 +247,6 @@ int exec_commands(cmd_t *head)
 		}
 		if (cmd->do_pipe) {
 			pipe(fd);
-			cmd->next->fdin = fd[0];
 			cmd->fdout = fd[1];
 		} else {
 			if (cmd->outfile) {
@@ -261,6 +261,9 @@ int exec_commands(cmd_t *head)
 
 		pid = fork();
 		if (pid == 0) {
+			if(cmd->do_pipe) {
+				close(fd[0]);
+			}
 			if (cmd->fdout > 0) {
 				close(1);
 				if (dup(cmd->fdout) != 1) {
@@ -275,20 +278,29 @@ int exec_commands(cmd_t *head)
 			execvp(cmd->argv[0], cmd->argv);
 			fprintf(stderr, "error executing: %s\n", cmd->argv[0]);
 			exit(1);
+		} 
+		if(cmd->do_pipe) {
+			cmd->next->fdin = fd[0];
+			close(fd[1]);
 		}
-		else {
-			wait(&status);
-			if (cmd->fdout != -1) {
-				close(cmd->fdout);
-			}
-			if (cmd->fdin != -1) {
-				close(cmd->fdin);
-			}
-			if (status != 0) {
-				fprintf(stderr, "%s exited with status %d\n", cmd->argv[0], status);
-				return -1;
+	}
+
+	pid_t p;
+	int err = 0;
+	while((p = wait(&status)) > 0) {
+		cmd_t *cm;
+		for(cm = head; cm; cm = cm->next) {
+			if(p == cm->pid) {
+				if(cmd->fdin != -1)
+					close(cmd->fdin);
+				if(cmd->fdout != -1)
+					close(cmd->fdout);
+				if(status != 0) {
+					printf("%s exited with status %d\n", cmd->argv[0], status);
+					err++;
+				}
 			}
 		}
 	}
-	return 0;
+	return err;
 }
