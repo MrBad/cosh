@@ -100,7 +100,7 @@ int get_token(char **buf, char *tok, char *end)
 			if (*p == '>')
 				*tok++ = *p++;
 		} else if (*p == '"') {
-			*tok++ = *p++;
+			p++;
 			while (*p && *p != '"') {
 				if (tok == end)
 					return -1;
@@ -108,7 +108,7 @@ int get_token(char **buf, char *tok, char *end)
 			}
 			if (tok == end)
 				return -1;
-			*tok++ = *p++;
+			p++;
 		} else {
 			*tok++ = *p++;
 		}
@@ -199,9 +199,12 @@ int parse(char *buf, cmd_t **h)
 void print_commands(cmd_t *head) 
 {
 	cmd_t *cmd;
-	
+	int i;
 	for (cmd = head; cmd; cmd = cmd->next) {
 		printf("cmd: %s, argc: %d\n", cmd->argv[0], cmd->argc);
+		for(i=0; i<cmd->argc; i++) {
+			printf("%d: %s\n", i, cmd->argv[i]);
+		}
 		if (cmd->do_pipe) {
 			printf("\tdo pipe ");
 			if (!cmd->next) {
@@ -291,10 +294,10 @@ int exec_commands(cmd_t *head)
 		cmd_t *cm;
 		for(cm = head; cm; cm = cm->next) {
 			if(p == cm->pid) {
-				if(cmd->fdin != -1)
-					close(cmd->fdin);
-				if(cmd->fdout != -1)
-					close(cmd->fdout);
+//				if(cmd->fdin != -1)
+//					close(cmd->fdin);
+//				if(cmd->fdout != -1)
+//					close(cmd->fdout);
 				if(status != 0) {
 					printf("%s exited with status %d\n", cmd->argv[0], status);
 					err++;
