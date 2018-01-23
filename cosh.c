@@ -60,7 +60,8 @@ int main()
 	while (1) {
 		head = NULL;
 		print_prompt();
-		read_line(line, sizeof(line));
+		if (read_line(line, sizeof(line)) == 0)
+		    break;
 		if (parse(line, &head) < 0) {
 			clean_cmd(head);
 			continue;
