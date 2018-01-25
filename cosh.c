@@ -49,6 +49,13 @@ void clean_cmd(cmd_t *cmd)
 	}
 }
 
+void sig_clean(int signum)
+{
+    (void) signum;
+    printf("\n");
+    print_prompt();
+}
+
 // from where we read -> stdin for now //
 int fd;
 
@@ -57,6 +64,10 @@ int main()
 	char line[512];
 	fd = 0;
 	cmd_t *head;
+
+	signal(SIGINT, sig_clean);
+	signal(SIGTERM, sig_clean);
+
 	while (1) {
 		head = NULL;
 		print_prompt();
